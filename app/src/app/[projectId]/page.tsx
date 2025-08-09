@@ -758,7 +758,7 @@ export default function ProjectPage() {
                 }}
               />
             ) : activeTab === "typescript" ? (
-              <SchemaExport schema={schema} formType={formType} />
+              <SchemaExport schema={schema} formType={formType} onSchemaChange={setSchema} />
             ) : (
               <FormInputAdapter schema={schema} formType={formType} />
             )}
