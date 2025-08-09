@@ -1,0 +1,89 @@
+{
+  "timestamp": "2025-08-09T22:46:43.772Z",
+  "requestId": "req_1754779590578_s2jq8t286",
+  "request": {
+    "intent": "organize-schema",
+    "fieldType": "multiple",
+    "groupType": "organization",
+    "hasScreenshot": false
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "blocks": [
+        {
+          "name": "Property Information",
+          "title": "Property Information",
+          "description": "Details about the property location, description, and items included with the home.",
+          "color_theme": "purple",
+          "item_count": 3
+        },
+        {
+          "name": "Financial Details",
+          "title": "Financial Details",
+          "description": "Rental amounts, prorations, deposits, and payment terms related to the lease.",
+          "color_theme": "orange",
+          "item_count": 1
+        },
+        {
+          "name": "Terms and Conditions",
+          "title": "Terms and Conditions",
+          "description": "Lease terms, renewal rules, auto-renewal options, and related clauses.",
+          "color_theme": "gray",
+          "item_count": 2
+        }
+      ],
+      "itemCount": 6
+    }
+  },
+  "openAISent": {
+    "model": "gpt-5-nano",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an AI assistant that specializes in organizing form schemas into logical blocks/sections for better user experience. Your task is to analyze schema items and group them into coherent sections.\n\nAVAILABLE BLOCK CATEGORIES (use these exact block names):\n1. \"Personal Information\" - Names, date of birth, SSN, identification\n2. \"Contact Details\" - Phone, email, mailing address, emergency contacts\n3. \"Property Information\" - Property address, type, features, condition\n4. \"Financial Details\" - Price, rent, deposits, payment terms, financial qualifications\n5. \"Terms and Conditions\" - Legal agreements, clauses, restrictions, rules\n6. \"Important Dates\" - Move-in dates, lease terms, deadlines, effective dates\n7. \"Additional Information\" - Notes, special requests, other details\n8. \"Signatures and Authorization\" - Signature fields, initials, date signed\n\nBLOCK COLORS (use these exact color_theme values):\n- Personal Information: \"blue\"\n- Contact Details: \"green\"\n- Property Information: \"purple\"\n- Financial Details: \"orange\"\n- Terms and Conditions: \"gray\"\n- Important Dates: \"blue\"\n- Additional Information: \"gray\"\n- Signatures and Authorization: \"green\"\n\nORGANIZATION RULES:\n1. Group related fields together based on their purpose and content\n2. Order blocks logically: Personal → Contact → Property → Financial → Terms → Dates → Additional → Signatures\n3. Within each block, order fields logically (e.g., first name before last name)\n4. Signature fields ALWAYS go in \"Signatures and Authorization\" block at the end\n5. Keep checkbox/radio groups together\n6. Date fields about timing/schedule go in \"Important Dates\"\n7. Legal text and agreements go in \"Terms and Conditions\"\n\nRESPONSE FORMAT:\nReturn a JSON object with an \"items\" array where each item has:\n- index: number (original index from input)\n- block: string (block category name from the list above)\n- order: number (new global order starting from 1)\n- block_order: number (order within the block, starting from 1 for each block)\n\nExample response structure:\n{\n  \"items\": [\n    {\n      \"index\": 0,\n      \"block\": \"Personal Information\",\n      \"order\": 1,\n      \"block_order\": 1\n    },\n    ...\n  ],\n  \"blocks\": [\n    {\n      \"name\": \"Personal Information\",\n      \"title\": \"Personal Information\",\n      \"description\": \"Basic information about the applicant\",\n      \"color_theme\": \"blue\",\n      \"item_count\": 5\n    },\n    ...\n  ]\n}\n\nIMPORTANT:\n- Every item MUST be assigned to a block\n- Use the exact block names provided above\n- Order should be sequential with no gaps\n- Maintain logical flow within and across blocks"
+      },
+      {
+        "role": "user",
+        "content": "Organize these 6 schema items into logical blocks:\n\n[\n  {\n    \"index\": 0,\n    \"unique_id\": \"property_street_address\",\n    \"display_name\": \"Property street address (including city, state, and ZIP)\",\n    \"input_type\": \"text\",\n    \"current_order\": 1,\n    \"description\": \"Enter the exact street address, including number, street name, city, state, and ZIP, as shown on the deed.\",\n    \"placeholder\": \"123 Main St, Anytown, CA 90210\",\n    \"special_input\": \"format_hint: single-line; allow numbers, letters, spaces, commas, and periods\",\n    \"value_type\": \"manual\",\n    \"is_signature\": false\n  },\n  {\n    \"index\": 1,\n    \"unique_id\": \"property_legal_description_cont\",\n    \"display_name\": \"Property legal description (as on deed)\",\n    \"input_type\": \"text\",\n    \"current_order\": 3,\n    \"description\": \"Provide the exact legal description from the deed or title. This field may be long; paste the text as written.\",\n    \"placeholder\": \"e.g., Lot 12, Block 3, Plan XYZ, as recorded in the deed\",\n    \"special_input\": {\n      \"textArea\": {\n        \"minRows\": 4,\n        \"maxRows\": 12,\n        \"autoResize\": true\n      }\n    },\n    \"value_type\": \"manual\",\n    \"is_signature\": false\n  },\n  {\n    \"index\": 2,\n    \"unique_id\": \"property_county\",\n    \"display_name\": \"Which personal items are included with the home?\",\n    \"input_type\": \"text\",\n    \"current_order\": 2,\n    \"description\": \"Personal items are things that aren’t part of the property itself (furniture, appliances, etc.).\",\n    \"placeholder\": \"e.g., refrigerator, washer, sofa\",\n    \"value_type\": \"manual\",\n    \"is_signature\": false\n  },\n  {\n    \"index\": 3,\n    \"unique_id\": \"prorated_rent_amount\",\n    \"display_name\": \"Move-in prorated rent\",\n    \"input_type\": \"text\",\n    \"current_order\": 4,\n    \"description\": \"Enter the prorated rent amount for the move-in period (partial month). If unknown, enter 0.00. This amount is used to calculate initial charges on the lease.\",\n    \"placeholder\": \"e.g., $1,250.00\",\n    \"special_input\": \"Currency mask: format as $1,250.00 with two decimals and thousands separators.\",\n    \"value_type\": \"manual\",\n    \"is_signature\": false\n  },\n  {\n    \"index\": 4,\n    \"unique_id\": \"auto_renewal_30_days_before_expiration_date\",\n    \"display_name\": \"Auto-renewal timing: 30 days before expiration or custom days?\",\n    \"input_type\": \"checkbox\",\n    \"current_order\": 5,\n    \"description\": \"Choose whether auto-renewal should start 30 days before expiration or allow a custom number of days.\",\n    \"special_input\": {\n      \"checkbox\": {\n        \"asRadio\": false\n      }\n    },\n    \"value_type\": \"manual\",\n    \"is_signature\": false,\n    \"checkbox_options\": [\n      \"Auto renew 30 days before expiration\",\n      \"Auto renew custom days before expiration\"\n    ]\n  },\n  {\n    \"index\": 5,\n    \"unique_id\": \"renewal_notice_on_last_day_of_month\",\n    \"display_name\": \"Auto-renewal options for your lease\",\n    \"input_type\": \"checkbox\",\n    \"current_order\": 6,\n    \"value_type\": \"manual\",\n    \"is_signature\": false,\n    \"checkbox_options\": [\n      \"Last Day Renewal Notice\",\n      \"Renewal Notice on date Assigned\",\n      \"Custom Late Fee\"\n    ]\n  }\n]\n\nForm Type: residential_lease_agreement\n\nAnalyze each field's display name and type to determine the appropriate block. Return a JSON response with the organized structure."
+      }
+    ],
+    "max_completion_tokens": 10000
+  },
+  "openAIReceived": {
+    "id": "chatcmpl-C2mcYS2YEWk7VuHgEurxSS4F0a9cz",
+    "object": "chat.completion",
+    "created": 1754779590,
+    "model": "gpt-5-nano-2025-08-07",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"items\": [\n    {\n      \"index\": 0,\n      \"block\": \"Property Information\",\n      \"order\": 1,\n      \"block_order\": 1\n    },\n    {\n      \"index\": 2,\n      \"block\": \"Property Information\",\n      \"order\": 2,\n      \"block_order\": 2\n    },\n    {\n      \"index\": 1,\n      \"block\": \"Property Information\",\n      \"order\": 3,\n      \"block_order\": 3\n    },\n    {\n      \"index\": 3,\n      \"block\": \"Financial Details\",\n      \"order\": 4,\n      \"block_order\": 1\n    },\n    {\n      \"index\": 4,\n      \"block\": \"Terms and Conditions\",\n      \"order\": 5,\n      \"block_order\": 1\n    },\n    {\n      \"index\": 5,\n      \"block\": \"Terms and Conditions\",\n      \"order\": 6,\n      \"block_order\": 2\n    }\n  ],\n  \"blocks\": [\n    {\n      \"name\": \"Property Information\",\n      \"title\": \"Property Information\",\n      \"description\": \"Details about the property location, description, and items included with the home.\",\n      \"color_theme\": \"purple\",\n      \"item_count\": 3\n    },\n    {\n      \"name\": \"Financial Details\",\n      \"title\": \"Financial Details\",\n      \"description\": \"Rental amounts, prorations, deposits, and payment terms related to the lease.\",\n      \"color_theme\": \"orange\",\n      \"item_count\": 1\n    },\n    {\n      \"name\": \"Terms and Conditions\",\n      \"title\": \"Terms and Conditions\",\n      \"description\": \"Lease terms, renewal rules, auto-renewal options, and related clauses.\",\n      \"color_theme\": \"gray\",\n      \"item_count\": 2\n    }\n  ]\n}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1455,
+      "completion_tokens": 3220,
+      "total_tokens": 4675,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2816,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "duration": 13194
+}

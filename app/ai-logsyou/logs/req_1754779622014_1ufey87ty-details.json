@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-08-09T22:47:08.020Z",
+  "requestId": "req_1754779622014_1ufey87ty",
+  "request": {
+    "intent": "tenant names",
+    "fieldType": "text",
+    "groupType": "text-continuation",
+    "hasScreenshot": false
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "display_name": "What are the tenants' names?",
+      "width": 6,
+      "placeholder": "e.g., Jane Doe, John Smith"
+    }
+  },
+  "openAISent": {
+    "model": "gpt-5-nano",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an AI assistant that specializes in translating complex legal and real estate terminology into simple, easy-to-understand questions for everyday users. You must ALWAYS return valid JSON with at least the display_name field.\n\nYOUR PRIMARY TASK: Take ANY input - whether it's simple words, complex legal jargon, or technical real estate terms - and transform it into a clear, friendly question that a person with no real estate or legal knowledge can understand.\n\nCRITICAL RULES FOR TRANSLATION:\n1. ALWAYS interpret the underlying meaning of legal/technical terms before creating the question\n2. Break down complex concepts into their simplest form\n3. Ask yourself: \"What is this really asking for?\" then phrase it simply\n4. Use everyday language that a teenager could understand\n5. Make questions specific and actionable\n6. Avoid ALL industry jargon in your output\n\nTRANSLATION GUIDELINES:\n- For location/area terms → Ask \"Where\" questions\n- For date/time terms → Ask \"When\" questions  \n- For person/entity terms → Ask \"Who\" questions\n- For amounts/quantities → Ask \"How much/many\" questions\n- For yes/no concepts → Ask \"Do you\" or \"Will you\" questions\n- For descriptive information → Ask \"What is\" or \"Please describe\" questions\n\nCOMPLEX JARGON TRANSLATIONS:\n- \"market area for buyer/tenant representation\" → \"In which areas would you like to search for properties?\"\n- \"earnest money deposit\" → \"How much money will you put down to show you're serious?\"\n- \"contingency period\" → \"How many days do you need to inspect the property?\"\n- \"fiduciary duty\" → \"Who is your agent representing?\"\n- \"escrow instructions\" → \"Where should the deposit money be held?\"\n- \"due diligence period\" → \"How long do you need to review everything?\"\n- \"encumbrances\" → \"Are there any restrictions on the property?\"\n- \"covenant, conditions, and restrictions (CC&Rs)\" → \"Are there any community rules to follow?\"\n- \"power of attorney\" → \"Who can sign documents on your behalf?\"\n- \"lease commencement date\" → \"When would you like to start renting?\"\n- \"security deposit amount\" → \"How much deposit is required?\"\n- \"right of first refusal\" → \"Do you want the first chance to buy if it's sold?\"\n\nFORMATTING RULES:\n1. Questions should be 4-10 words when possible\n2. Start with question words (What, When, Where, Who, How, Do you, Will you, etc.)\n3. Use \"you\" and \"your\" to make it personal\n4. Be specific about what information is needed\n5. Only add a description if the question alone isn't clear enough\n6. Width should be 1-12 (grid units), with most fields being 6 or 12\n7. Placeholders should show realistic examples\n8. ALWAYS return valid JSON with at least {\"display_name\": \"...\"}\n\nRemember: Your user might be filling this form for the first time and has no idea what legal terms mean. Make it as simple as asking a friend for basic information.\n\nIMPORTANT - Only use these EXACT properties (no other properties allowed):\n- display_name: string (REQUIRED)\n- description: string (optional)\n- width: number 1-12 (optional)\n- placeholder: string (optional, for text fields only)\n- special_input: object (optional, see below)\n- checkbox_options: object (optional, ONLY for checkbox fields, see below)\n\nFor special_input on TEXT fields, ONLY use these exact properties:\n- text.percentage: boolean\n- text.phone: boolean\n- text.date: boolean\n- text.numbered_date: boolean\n- text.month_year: boolean\n- text.currency: boolean\n- text.number: boolean\n- text.email: boolean\n- text.url: boolean\n\nFor special_input on CHECKBOX fields:\n- checkbox.asRadio: boolean - When true, makes checkboxes behave like radio buttons (single selection only)\n- checkbox.horizontal: number - Number of columns to arrange checkboxes in\n  * 1 = vertical stacking (default)\n  * 2 = two columns side by side\n  * 3 = three columns\n  * Example: If you have 2 yes/no checkboxes, set horizontal: 2 to show them side by side\n  * Example: If you have 6 options, horizontal: 2 creates a 3x2 grid\n\nFor special_input on RADIO fields:\n- radio.layout: \"vertical\" | \"horizontal\" | \"grid\"\n- radio.columns: number - For grid layout, number of columns\n\nCHECKBOX LAYOUT GUIDELINES:\n- For yes/no questions or pairs of options, use horizontal: 2 to save vertical space\n- For long lists (>4 options), consider horizontal: 2 or 3 for better use of space\n- Use asRadio: true when the checkboxes should be mutually exclusive (only one can be selected)\n\nFor CHECKBOX fields ONLY, you can also provide checkbox_options to give better display names:\n- checkbox_options.options: array of {display_name: string, value: string}\n  - display_name: User-friendly label for this checkbox option\n  - value: The original PDF field name (must match exactly)\n  \nWhen generating checkbox options:\n1. Transform technical field names into clear, simple questions or labels\n2. Remove underscores and make proper capitalization\n3. For yes/no type fields, use clear \"Yes\" or \"No\" labels\n4. For agreement fields, use action-oriented labels like \"I agree to...\"\n5. Keep labels concise but clear\n\nDO NOT add any other properties like \"suggestions\", \"type\", \"format\", etc.\n\nField Type: text\nGroup Type: text-continuation\nPDF Field Names: tenant_names, tenant_names_cont"
+      },
+      {
+        "role": "user",
+        "content": "User Intent: \"tenant names\"\n\nTASK: Transform this intent (which may contain complex legal or real estate jargon) into a simple, clear question that anyone can understand.\n\nPROCESS:\n1. First, identify if this contains technical/legal terms\n2. If yes, translate the jargon into plain English\n3. Then create a friendly question based on the plain English meaning\n4. Make sure a person with zero real estate knowledge would understand\n\nFor example:\n- If the intent mentions \"market area\" or \"representation area\" → This means where someone wants to look for properties\n- If it mentions \"earnest money\" or \"deposit\" → This means money to show they're serious\n- If it mentions \"contingency\" → This means conditions that must be met\n- If it mentions \"escrow\" → This means a neutral third party holding money\n\nYour response should be a question that sounds like you're helping a friend fill out a form, NOT a legal document.\n\nReturn ONLY a JSON object with these exact properties (no other properties):\n- display_name: string (required) - A simple, clear question based on the translated intent\n- description: string (optional) - Only if the question needs additional clarification\n- width: number (optional) - Grid width from 1-12, default to 6 for most fields, 12 for large fields\n- placeholder: string (optional) - Example text for text fields only\n\nFor checkbox fields, ALSO include:\n- checkbox_options: object with \"options\" array\n  Each option should have:\n  - display_name: User-friendly label (e.g., \"Yes\", \"I agree\", \"Include parking\")\n  - value: The exact PDF field name\n\nFor text fields, if special formatting is needed, use special_input with ONLY these properties:\n- special_input.text.phone: true (for phone numbers)\n- special_input.text.email: true (for email addresses)\n- special_input.text.date: true (for dates like \"January 1, 2025\")\n- special_input.text.numbered_date: true (for dates like \"01/01/2025\")\n- special_input.text.currency: true (for money amounts)\n- special_input.text.number: true (for numbers only)\n- special_input.text.percentage: true (for percentages)\n\nExample valid response:\n{\n  \"display_name\": \"Phone Number\",\n  \"width\": 6,\n  \"placeholder\": \"(555) 123-4567\",\n  \"special_input\": {\n    \"text\": {\n      \"phone\": true\n    }\n  }\n}"
+      }
+    ],
+    "max_completion_tokens": 10000
+  },
+  "openAIReceived": {
+    "id": "chatcmpl-C2md42nLkcWzLTxrSeg2CLcnrSp2A",
+    "object": "chat.completion",
+    "created": 1754779622,
+    "model": "gpt-5-nano-2025-08-07",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"display_name\": \"What are the tenants' names?\",\n  \"width\": 6,\n  \"placeholder\": \"e.g., Jane Doe, John Smith\"\n}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1750,
+      "completion_tokens": 1197,
+      "total_tokens": 2947,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1152,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "duration": 6006
+}

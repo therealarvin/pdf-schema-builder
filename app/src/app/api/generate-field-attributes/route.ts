@@ -303,12 +303,56 @@ Example valid response:
     }
 
     // Validate and clean the response - remove invalid properties
-    const validProperties = ['display_name', 'description', 'width', 'placeholder', 'special_input', 'checkbox_options'];
+    // Define what properties the AI is allowed to set for new field generation
+    const validDisplayProperties = [
+      'display_name', 
+      'description', 
+      'width', 
+      'placeholder', 
+      'special_input',
+      'isRequired',
+      'validation',
+      'order'
+    ];
+    
+    // Properties that should NEVER be modified by AI in this route
+    const restrictedProperties = [
+      'unique_id',  // This is set by the system
+      'input_type', // This is determined by the field type parameter
+      'value',      // This is configured separately
+      'pdf_attributes' // This is set based on PDF field mapping
+    ];
+    
     const cleaned: Record<string, unknown> = {};
     
-    for (const key of validProperties) {
+    // Check for restricted properties and warn if AI tried to set them
+    for (const restrictedProp of restrictedProperties) {
+      if (restrictedProp in parsed) {
+        console.warn(`[${requestId}] AI attempted to set restricted property: ${restrictedProp}`);
+      }
+    }
+    
+    // Only include valid properties
+    for (const key of validDisplayProperties) {
       if (key in parsed && parsed[key] !== '' && parsed[key] !== null) {
-        cleaned[key] = parsed[key];
+        // Additional validation for specific fields
+        if (key === 'width') {
+          const width = parsed[key];
+          if (typeof width === 'number' && width >= 1 && width <= 12) {
+            cleaned[key] = width;
+          } else {
+            console.warn(`[${requestId}] Invalid width value: ${width}, using default`);
+          }
+        } else if (key === 'order') {
+          const order = parsed[key];
+          if (typeof order === 'number' && order >= 0) {
+            cleaned[key] = order;
+          } else {
+            console.warn(`[${requestId}] Invalid order value: ${order}, ignoring`);
+          }
+        } else {
+          cleaned[key] = parsed[key];
+        }
       }
     }
     

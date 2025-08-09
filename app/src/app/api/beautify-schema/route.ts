@@ -616,6 +616,21 @@ ${JSON.stringify(currentSchema.filter(s => s.display_attributes.block === blockN
         hasOverallAssessment: !!beautificationPlan.overallAssessment
       });
       
+      // Define allowed modifications for beautification
+      const ALLOWED_DISPLAY_MODIFICATIONS = [
+        'width',
+        'placeholder',
+        'order',
+        'display_name',
+        'description',
+        'isRequired',
+        'special_input',
+        'isHidden',
+        'isCached',
+        'validation',
+        'block_style'
+      ];
+      
       // Apply the changes to schema
       const changes: SchemaChange[] = [];
       
@@ -626,9 +641,26 @@ ${JSON.stringify(currentSchema.filter(s => s.display_attributes.block === blockN
           if (itemIndex !== -1) {
             const item = currentSchema[itemIndex];
             
-            // Apply modifications
+            // Apply modifications with validation
             if (change.modifications) {
               Object.entries(change.modifications).forEach(([key, value]) => {
+                // Only allow modifications to permitted fields
+                if (!ALLOWED_DISPLAY_MODIFICATIONS.includes(key)) {
+                  console.warn(`[${requestId}] Blocked attempt to modify restricted field: ${key} for item ${change.unique_id}`);
+                  return;
+                }
+                
+                // Additional validation for specific fields
+                if (key === 'width' && (typeof value !== 'number' || value < 1 || value > 12)) {
+                  console.warn(`[${requestId}] Invalid width value: ${value} for item ${change.unique_id}`);
+                  return;
+                }
+                
+                if (key === 'order' && (typeof value !== 'number' || value < 0)) {
+                  console.warn(`[${requestId}] Invalid order value: ${value} for item ${change.unique_id}`);
+                  return;
+                }
+                
                 const oldValue = (item.display_attributes as any)[key];
                 if (oldValue !== value) {
                   changes.push({
@@ -639,7 +671,7 @@ ${JSON.stringify(currentSchema.filter(s => s.display_attributes.block === blockN
                     reason: change.reasoning || 'Aesthetic improvement'
                   });
                   
-                  // Apply the change
+                  // Apply the validated change
                   (item.display_attributes as any)[key] = value;
                 }
               });

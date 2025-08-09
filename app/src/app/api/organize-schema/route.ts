@@ -181,7 +181,7 @@ Analyze each field's display name and type to determine the appropriate block. R
       throw new Error('Invalid response structure: missing items array');
     }
 
-    // Apply the organization to the original schema
+    // Apply the organization to the original schema with validation
     const organizedSchema = schema.map((item: SchemaItem, index: number) => {
       const orgInfo = parsed.items.find((i: any) => i.index === index);
       if (!orgInfo) {
@@ -189,7 +189,26 @@ Analyze each field's display name and type to determine the appropriate block. R
         return item;
       }
 
+      // Validate order value
+      if (typeof orgInfo.order !== 'number' || orgInfo.order < 0) {
+        console.warn(`[${requestId}] Invalid order value: ${orgInfo.order} for item at index ${index}`);
+        return item;
+      }
+
+      // Validate block name
+      if (typeof orgInfo.block !== 'string' || orgInfo.block.trim() === '') {
+        console.warn(`[${requestId}] Invalid block name: ${orgInfo.block} for item at index ${index}`);
+        return item;
+      }
+
       const blockInfo = parsed.blocks?.find((b: any) => b.name === orgInfo.block);
+      
+      // Validate color_theme if present
+      const validColorThemes = ['blue', 'green', 'purple', 'orange', 'gray'];
+      if (blockInfo?.color_theme && !validColorThemes.includes(blockInfo.color_theme)) {
+        console.warn(`[${requestId}] Invalid color_theme: ${blockInfo.color_theme}, using default 'gray'`);
+        blockInfo.color_theme = 'gray';
+      }
       
       return {
         ...item,
