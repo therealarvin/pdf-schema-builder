@@ -330,7 +330,44 @@ export default function ProjectPage() {
       return;
     }
     
-    // Normal selection mode
+    // Normal mode - check if this field belongs to a schema item
+    // Find the schema item that contains this field
+    let fieldSchemaItem: SchemaItem | undefined;
+    
+    schema.forEach(item => {
+      item.pdf_attributes?.forEach(attr => {
+        // Check main form fields
+        if (typeof attr.formfield === 'string' && attr.formfield === field.name) {
+          fieldSchemaItem = item;
+        } else if (Array.isArray(attr.formfield) && attr.formfield.includes(field.name)) {
+          fieldSchemaItem = item;
+        }
+        
+        // Check linked text fields
+        if (attr.linked_form_fields_text?.includes(field.name)) {
+          fieldSchemaItem = item;
+        }
+        
+        // Check linked checkbox fields
+        if (attr.linked_form_fields_checkbox?.some(cb => cb.pdfAttribute === field.name)) {
+          fieldSchemaItem = item;
+        }
+        
+        // Check linked radio fields
+        if (attr.linked_form_fields_radio?.some(r => r.radioField === field.name)) {
+          fieldSchemaItem = item;
+        }
+      });
+    });
+    
+    // If the field is grouped (belongs to a schema item), open its editor
+    if (fieldSchemaItem) {
+      setEditingSchemaItemId(fieldSchemaItem.unique_id);
+      setActiveTab("editor"); // Switch to editor tab if not already there
+      return;
+    }
+    
+    // Otherwise, handle normal selection for ungrouped fields
     const newSelected = new Set(selectedFields);
     if (newSelected.has(field.name)) {
       newSelected.delete(field.name);
@@ -750,6 +787,7 @@ export default function ProjectPage() {
                 onHighlightField={setHighlightedField}
                 onNavigateToPage={setCurrentPage}
                 onEditingItemChange={setEditingSchemaItemId}
+                editingItemId={editingSchemaItemId}
                 extractedFields={extractedFields}
                 currentPage={currentPage}
                 visibilityFieldSelectionMode={!!visibilitySelectionMode}

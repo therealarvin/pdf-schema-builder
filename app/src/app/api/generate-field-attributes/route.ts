@@ -26,51 +26,62 @@ export async function POST(request: NextRequest) {
     // Extract just the field names from pdfContext for the system prompt
     const fieldNames = pdfContext.map((f: { name: string }) => f.name).join(', ');
     
-    const systemPrompt = `You are an AI assistant that specializes in translating complex legal and real estate terminology into simple, easy-to-understand questions for everyday users. You must ALWAYS return valid JSON with at least the display_name field.
+    const systemPrompt = `You are an AI assistant helping REALTORS fill out complex real estate forms. Your job is to create clear questions that realtors can ask their CLIENTS to gather the necessary information. You must ALWAYS return valid JSON with at least the display_name field.
 
-YOUR PRIMARY TASK: Take ANY input - whether it's simple words, complex legal jargon, or technical real estate terms - and transform it into a clear, friendly question that a person with no real estate or legal knowledge can understand.
+YOUR PRIMARY TASK: Transform any field name or intent into a question that a REALTOR would ASK THEIR CLIENT. The questions should be phrased from the realtor's perspective, helping them gather information from buyers, sellers, tenants, or landlords.
 
-CRITICAL RULES FOR TRANSLATION:
-1. ALWAYS interpret the underlying meaning of legal/technical terms before creating the question
-2. Break down complex concepts into their simplest form
-3. Ask yourself: "What is this really asking for?" then phrase it simply
-4. Use everyday language that a teenager could understand
-5. Make questions specific and actionable
-6. Avoid ALL industry jargon in your output
+CRITICAL PERSPECTIVE RULES:
+1. Use SPECIFIC ROLE NAMES (buyer, seller, tenant, landlord) instead of "client"
+2. DO NOT use "your" for buyers, sellers, tenants, or landlords - use "the"
+3. For realtor-specific information (license, broker info), use "your" - "What is your license number?"
+4. For specific parties, use "the buyer", "the seller", "the tenant", "the landlord"
+5. Make it clear WHO should provide the information
+6. Keep language professional but friendly
 
-TRANSLATION GUIDELINES:
-- For location/area terms → Ask "Where" questions
-- For date/time terms → Ask "When" questions  
-- For person/entity terms → Ask "Who" questions
-- For amounts/quantities → Ask "How much/many" questions
-- For yes/no concepts → Ask "Do you" or "Will you" questions
-- For descriptive information → Ask "What is" or "Please describe" questions
+REALTOR-TO-CLIENT QUESTION PATTERNS:
+- Buyer/Seller dates → "When did the buyer/seller [action]?"
+- Tenant/Landlord info → "What is the tenant's/landlord's [information]?"
+- Property details → "What is the property's [detail]?"
+- Transaction terms → "What [terms] does the buyer/seller want?"
+- Realtor's own info → "What is your [realtor info]?" (use "your" only for realtor)
 
-COMPLEX JARGON TRANSLATIONS:
-- "market area for buyer/tenant representation" → "In which areas would you like to search for properties?"
-- "earnest money deposit" → "How much money will you put down to show you're serious?"
-- "contingency period" → "How many days do you need to inspect the property?"
-- "fiduciary duty" → "Who is your agent representing?"
-- "escrow instructions" → "Where should the deposit money be held?"
-- "due diligence period" → "How long do you need to review everything?"
-- "encumbrances" → "Are there any restrictions on the property?"
-- "covenant, conditions, and restrictions (CC&Rs)" → "Are there any community rules to follow?"
-- "power of attorney" → "Who can sign documents on your behalf?"
-- "lease commencement date" → "When would you like to start renting?"
-- "security deposit amount" → "How much deposit is required?"
-- "right of first refusal" → "Do you want the first chance to buy if it's sold?"
+SPECIFIC FIELD TRANSLATIONS FOR REALTORS:
+- "date form received" → "When did the buyer receive this form?"
+- "buyer name" → "What is the buyer's full name?"
+- "seller name" → "What is the seller's full name?"
+- "tenant name" → "What is the tenant's full name?"
+- "landlord name" → "What is the landlord's full name?"
+- "realtor license number" → "What is your license number?"
+- "broker name" → "What is your broker's name?"
+- "earnest money deposit" → "How much earnest money will the buyer deposit?"
+- "closing date" → "When does the buyer want to close?"
+- "possession date" → "When will the buyer take possession?"
+- "inspection period" → "How many days does the buyer need for inspections?"
+- "offer expiration" → "When does the buyer's offer expire?"
+- "property address" → "What is the property address?"
+- "purchase price" → "What is the buyer offering to pay?"
+- "listing price" → "What is the listing price?"
+- "commission rate" → "What is your commission rate?"
+- "contingencies" → "What contingencies does the buyer require?"
+- "financing type" → "How will the buyer finance this purchase?"
+- "down payment" → "How much will the buyer put down?"
+- "loan amount" → "How much will the buyer need to borrow?"
+- "lease term" → "How long is the lease term?"
+- "rent amount" → "What is the monthly rent?"
+- "security deposit" → "How much is the security deposit?"
 
 FORMATTING RULES:
-1. Questions should be 4-10 words when possible
-2. Start with question words (What, When, Where, Who, How, Do you, Will you, etc.)
-3. Use "you" and "your" to make it personal
-4. Be specific about what information is needed
-5. Only add a description if the question alone isn't clear enough
-6. Width should be 1-12 (grid units), with most fields being 6 or 12
-7. Placeholders should show realistic examples
-8. ALWAYS return valid JSON with at least {"display_name": "..."}
+1. Questions should be clear and direct
+2. Start with question words (What, When, Where, Who, How, Does, Will, etc.)
+3. Use "the buyer/seller/tenant/landlord" NOT "your buyer" or "your client"
+4. Only use "your" for the realtor's own information
+5. Be specific about what information is needed
+6. Only add a description if the question needs clarification
+7. Width should be 1-12 (grid units), with most fields being 6 or 12
+8. Placeholders should show realistic examples
+9. ALWAYS return valid JSON with at least {"display_name": "..."}
 
-Remember: Your user might be filling this form for the first time and has no idea what legal terms mean. Make it as simple as asking a friend for basic information.
+Remember: Use SPECIFIC ROLES (the buyer, the seller, the tenant, the landlord) instead of generic terms. Only use "your" when referring to the realtor's own information.
 
 IMPORTANT - Only use these EXACT properties (no other properties allowed):
 - display_name: string (REQUIRED)
@@ -129,21 +140,33 @@ PDF Field Names: ${fieldNames}`;
 
     const userPrompt = `User Intent: "${intent}"
 
-TASK: Transform this intent (which may contain complex legal or real estate jargon) into a simple, clear question that anyone can understand.
+TASK: Transform this into a question that a REALTOR would ask to gather information for this field.
 
-PROCESS:
-1. First, identify if this contains technical/legal terms
-2. If yes, translate the jargon into plain English
-3. Then create a friendly question based on the plain English meaning
-4. Make sure a person with zero real estate knowledge would understand
+CRITICAL CONTEXT: You are helping a REALTOR fill out forms. Identify the subject:
+- Is this about the REALTOR themselves?
+- Is this about a BUYER, SELLER, TENANT, or LANDLORD?
+- Is this about the PROPERTY?
 
-For example:
-- If the intent mentions "market area" or "representation area" → This means where someone wants to look for properties
-- If it mentions "earnest money" or "deposit" → This means money to show they're serious
-- If it mentions "contingency" → This means conditions that must be met
-- If it mentions "escrow" → This means a neutral third party holding money
+DECISION TREE:
+1. If it's about buyer → "What is the buyer's...?" or "When did the buyer...?"
+2. If it's about seller → "What is the seller's...?" or "When did the seller...?"
+3. If it's about tenant → "What is the tenant's...?" or "When did the tenant...?"
+4. If it's about landlord → "What is the landlord's...?" or "When did the landlord...?"
+5. If it's about realtor's info → "What is your...?" (use "your" ONLY here)
+6. If it's about property → "What is the property's...?"
+7. If it's about transaction → Use specific party: "What does the buyer offer?"
 
-Your response should be a question that sounds like you're helping a friend fill out a form, NOT a legal document.
+IMPORTANT: NEVER use "your buyer" or "your client" - always use "the buyer", "the seller", etc.
+
+EXAMPLES:
+- "date received" → "When did the buyer receive this?"
+- "buyer signature date" → "When did the buyer sign?"
+- "seller name" → "What is the seller's full name?"
+- "tenant email" → "What is the tenant's email address?"
+- "agent license" → "What is your license number?"
+- "earnest money" → "How much earnest money will the buyer deposit?"
+
+Your response should make it crystal clear who the information is about.
 
 Return ONLY a JSON object with these exact properties (no other properties):
 - display_name: string (required) - A simple, clear question based on the translated intent

@@ -39,6 +39,7 @@ interface SchemaEditorProps {
   onHighlightField?: (fieldName: string | null) => void;
   onNavigateToPage?: (page: number) => void;
   onEditingItemChange?: (itemId: string | null) => void;
+  editingItemId?: string | null;  // Add this prop to receive which item should be editing
   extractedFields?: PDFField[];
   currentPage?: number;
   visibilityFieldSelectionMode?: boolean;
@@ -90,7 +91,8 @@ function SortableSchemaItem({
 
   return (
     <div 
-      ref={setNodeRef} 
+      ref={setNodeRef}
+      id={`schema-item-${item.unique_id}`}
       style={{
         ...style,
         border: "1px solid #d1d5db",
@@ -98,6 +100,19 @@ function SortableSchemaItem({
         padding: "12px",
         marginBottom: "12px",
         background: isDragging ? "#f3f4f6" : "white",
+        transition: "box-shadow 0.2s, background-color 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        if (!isEditing && !linkingMode && !isDragging) {
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+          e.currentTarget.style.backgroundColor = "#f9fafb";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isEditing && !isDragging) {
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = isDragging ? "#f3f4f6" : "white";
+        }
       }}
     >
       {isEditing ? (
@@ -131,7 +146,21 @@ function SortableSchemaItem({
             <div style={{ width: "20px", height: "2px", background: "#9ca3af" }} />
           </div>
           
-          <div style={{ flex: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div 
+            style={{ 
+              flex: 1, 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              cursor: linkingMode ? "default" : "pointer"
+            }}
+            onClick={(e) => {
+              // Only open editor if not in linking mode and not clicking on buttons
+              if (!linkingMode && !(e.target as HTMLElement).closest('button')) {
+                onEdit();
+              }
+            }}
+          >
             <div>
               <strong>{item.display_attributes.display_name || item.unique_id}</strong>
               <div style={{ fontSize: "14px", color: "#6b7280" }}>
@@ -140,7 +169,10 @@ function SortableSchemaItem({
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button
-                onClick={onEdit}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent onClick
+                  onEdit();
+                }}
                 style={{
                   padding: "4px 8px",
                   border: "1px solid #d1d5db",
@@ -153,7 +185,10 @@ function SortableSchemaItem({
                 Edit
               </button>
               <button
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent onClick
+                  onDelete();
+                }}
                 style={{
                   padding: "4px 8px",
                   border: "1px solid #ef4444",
@@ -184,6 +219,7 @@ export default function SchemaEditor({
   onHighlightField, 
   onNavigateToPage,
   onEditingItemChange,
+  editingItemId,
   extractedFields = [],
   currentPage,
   visibilityFieldSelectionMode: parentVisibilityMode,
@@ -211,6 +247,25 @@ export default function SchemaEditor({
   // Visibility field selection mode
   const [visibilityFieldSelectionMode, setVisibilityFieldSelectionMode] = useState<number | null>(null);
   const [visibilityEditingItemId, setVisibilityEditingItemId] = useState<string | null>(null);
+  
+  // Watch for external editingItemId changes (from clicking fields in PDF)
+  React.useEffect(() => {
+    if (editingItemId && editingItemId !== editingItem) {
+      setEditingItem(editingItemId);
+      setPersistentEditingItem(editingItemId);
+      if (onEditingItemChange) {
+        onEditingItemChange(editingItemId);
+      }
+      
+      // Scroll to the item being edited
+      setTimeout(() => {
+        const element = document.getElementById(`schema-item-${editingItemId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [editingItemId]);
   
   // Helper to get all field names associated with a schema item
   const getSchemaItemFieldNames = (item: SchemaItem): string[] => {
