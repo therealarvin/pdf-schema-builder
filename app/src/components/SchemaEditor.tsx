@@ -44,6 +44,8 @@ interface SchemaEditorProps {
   currentPage?: number;
   visibilityFieldSelectionMode?: boolean;
   onVisibilityFieldSelected?: (schemaItemId: string, conditionIndex: number) => void;
+  useAI?: boolean;
+  onUseAIChange?: (useAI: boolean) => void;
 }
 
 // Sortable item component
@@ -223,7 +225,9 @@ export default function SchemaEditor({
   extractedFields = [],
   currentPage,
   visibilityFieldSelectionMode: parentVisibilityMode,
-  onVisibilityFieldSelected
+  onVisibilityFieldSelected,
+  useAI: parentUseAI,
+  onUseAIChange
 }: SchemaEditorProps) {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [newItem, setNewItem] = useState<Partial<SchemaItem> | null>(null);
@@ -240,6 +244,11 @@ export default function SchemaEditor({
   const [showBeautificationModal, setShowBeautificationModal] = useState(false);
   const [showCheckboxIntentDialog, setShowCheckboxIntentDialog] = useState(false);
   const [pendingCheckboxGroup, setPendingCheckboxGroup] = useState<FieldGroup | null>(null);
+  const [internalUseAI, setInternalUseAI] = useState(true); // Internal AI toggle state
+  
+  // Use parent useAI if provided, otherwise use internal state
+  const useAI = parentUseAI !== undefined ? parentUseAI : internalUseAI;
+  const setUseAI = onUseAIChange || setInternalUseAI;
   
   // Store the last editing item to preserve it across various actions
   const [persistentEditingItem, setPersistentEditingItem] = useState<string | null>(null);
@@ -404,8 +413,8 @@ export default function SchemaEditor({
       }]
     };
 
-    // If intent is provided, use AI to enhance other attributes
-    if (group.intent) {
+    // If intent is provided and AI is enabled, use AI to enhance other attributes
+    if (group.intent && useAI) {
       try {
         setIsGeneratingAI(true);
         
@@ -454,7 +463,7 @@ export default function SchemaEditor({
       const labels: { fieldName: string; displayName: string; reasoning: string }[] = [];
       
       for (const checkboxIntent of intents) {
-        if (checkboxIntent.intent) {
+        if (checkboxIntent.intent && useAI) {
           // Generate label with AI for this specific checkbox
           const labelResponse = await generateSingleCheckboxLabel({
             fieldName: checkboxIntent.fieldName,
@@ -468,11 +477,11 @@ export default function SchemaEditor({
             reasoning: labelResponse.reasoning
           });
         } else {
-          // No intent provided, use original field name
+          // Use intent as display name if AI is disabled or no intent provided
           labels.push({
             fieldName: checkboxIntent.fieldName,
-            displayName: checkboxIntent.fieldName,
-            reasoning: 'No intent provided, using original field name'
+            displayName: checkboxIntent.intent || checkboxIntent.fieldName,
+            reasoning: useAI ? 'No intent provided, using original field name' : 'AI disabled - using manual input'
           });
         }
       }
@@ -555,8 +564,8 @@ export default function SchemaEditor({
       }];
     }
 
-    // If intent is provided, use AI to generate better attributes
-    if (group.intent) {
+    // If intent is provided and AI is enabled, use AI to generate better attributes
+    if (group.intent && useAI) {
       try {
         setIsGeneratingAI(true);
         
@@ -986,12 +995,32 @@ export default function SchemaEditor({
         }}
         onHighlightField={onHighlightField}
         onNavigateToPage={onNavigateToPage}
+        useAI={useAI}
       />
       
       <div style={{ padding: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <h2>Schema Editor</h2>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <label style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "8px",
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            borderRadius: "6px",
+            background: "white",
+            fontSize: "14px",
+            cursor: "pointer"
+          }}>
+            <input
+              type="checkbox"
+              checked={useAI}
+              onChange={(e) => setUseAI(e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontWeight: "500" }}>🤖 Use AI</span>
+          </label>
           {schema.length > 0 && (
             <button
               onClick={handleOrganizeSchema}

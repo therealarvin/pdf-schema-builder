@@ -14,6 +14,8 @@ import { saveSchemaToIndexedDB, loadSchemaFromIndexedDB } from "@/lib/schemaStor
 import FormInputAdapter from "@/components/FormInput/FormInputAdapter";
 import NotificationModal from "@/components/NotificationModal";
 import LinkConfirmPopover from "@/components/LinkConfirmPopover";
+import CoordinatesViewer from "@/components/CoordinatesViewer";
+import BlockOrganizer from "@/components/BlockOrganizer";
 
 const MAX_BYTES = 20_971_520; // 20 MB
 function humanSize(bytes: number): string {
@@ -46,12 +48,13 @@ export default function ProjectPage() {
   const [extractedFields, setExtractedFields] = useState<PDFField[]>([]);
   const [showGrouping, setShowGrouping] = useState(false);
   const [currentFieldGroup, setCurrentFieldGroup] = useState<FieldGroup | undefined>();
-  const [activeTab, setActiveTab] = useState<"editor" | "typescript" | "visual">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "typescript" | "visual" | "coordinates" | "blocks">("editor");
   const [linkingMode, setLinkingMode] = useState<{ linkingPath: string; linkingType: 'checkbox' | 'date' | 'text' } | null>(null);
   const [highlightedField, setHighlightedField] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [editingSchemaItemId, setEditingSchemaItemId] = useState<string | null>(null);
   const [visibilitySelectionMode, setVisibilitySelectionMode] = useState<{ schemaItemId: string; conditionIndex: number } | null>(null);
+  const [useAI, setUseAI] = useState(true); // Add AI toggle state
   
   // Modal state
   const [notification, setNotification] = useState<{
@@ -677,10 +680,10 @@ export default function ProjectPage() {
       </div>
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* PDF Viewer - Make it narrower when Visual Editor is active */}
+        {/* PDF Viewer - Make it narrower when Visual Editor, Coordinates, or Blocks is active */}
         <div style={{ 
-          flex: activeTab === "visual" ? "0 0 35%" : 1, 
-          minWidth: activeTab === "visual" ? "350px" : undefined,
+          flex: (activeTab === "visual" || activeTab === "coordinates" || activeTab === "blocks") ? "0 0 35%" : 1, 
+          minWidth: (activeTab === "visual" || activeTab === "coordinates" || activeTab === "blocks") ? "350px" : undefined,
           borderRight: "1px solid #e5e7eb" 
         }}>
           {linkingMode && (
@@ -721,9 +724,9 @@ export default function ProjectPage() {
           />
         </div>
 
-        {/* Schema Editor / TypeScript Export / Visual Editor - Give Visual Editor more space */}
+        {/* Schema Editor / TypeScript Export / Visual Editor / Coordinates / Blocks - Give Visual Editor, Coordinates, and Blocks more space */}
         <div style={{ 
-          flex: activeTab === "visual" ? "1 1 65%" : 1, 
+          flex: (activeTab === "visual" || activeTab === "coordinates" || activeTab === "blocks") ? "1 1 65%" : 1, 
           display: "flex", 
           flexDirection: "column",
           minWidth: 0  // Allow flexbox to shrink properly
@@ -772,6 +775,32 @@ export default function ProjectPage() {
             >
               Visual Editor
             </button>
+            <button
+              onClick={() => setActiveTab("coordinates")}
+              style={{
+                padding: "10px 20px",
+                background: activeTab === "coordinates" ? "white" : "transparent",
+                border: "none",
+                borderBottom: activeTab === "coordinates" ? "2px solid #2563eb" : "none",
+                cursor: "pointer",
+                fontWeight: activeTab === "coordinates" ? "bold" : "normal"
+              }}
+            >
+              Copy Coordinates
+            </button>
+            <button
+              onClick={() => setActiveTab("blocks")}
+              style={{
+                padding: "10px 20px",
+                background: activeTab === "blocks" ? "white" : "transparent",
+                border: "none",
+                borderBottom: activeTab === "blocks" ? "2px solid #2563eb" : "none",
+                cursor: "pointer",
+                fontWeight: activeTab === "blocks" ? "bold" : "normal"
+              }}
+            >
+              Blocks
+            </button>
           </div>
 
           <div style={{ flex: 1, overflow: "auto" }}>
@@ -794,11 +823,17 @@ export default function ProjectPage() {
                 onVisibilityFieldSelected={(schemaItemId, conditionIndex) => {
                   setVisibilitySelectionMode({ schemaItemId, conditionIndex });
                 }}
+                useAI={useAI}
+                onUseAIChange={setUseAI}
               />
             ) : activeTab === "typescript" ? (
               <SchemaExport schema={schema} formType={formType} onSchemaChange={setSchema} />
-            ) : (
+            ) : activeTab === "visual" ? (
               <FormInputAdapter schema={schema} formType={formType} />
+            ) : activeTab === "coordinates" ? (
+              <CoordinatesViewer extractedFields={extractedFields} />
+            ) : (
+              <BlockOrganizer schema={schema} onSchemaChange={setSchema} formType={formType} />
             )}
           </div>
         </div>
@@ -810,6 +845,7 @@ export default function ProjectPage() {
           selectedFields={extractedFields.filter(f => selectedFields.has(f.name))}
           onCreateGroup={handleGroupCreated}
           onCancel={() => setShowGrouping(false)}
+          useAI={useAI}
         />
       )}
       

@@ -13,6 +13,7 @@ interface IndividualCheckboxIntentDialogProps {
   onCancel: () => void;
   onHighlightField?: (fieldName: string | null) => void;
   onNavigateToPage?: (page: number) => void;
+  useAI?: boolean;
 }
 
 export default function IndividualCheckboxIntentDialog({
@@ -21,7 +22,8 @@ export default function IndividualCheckboxIntentDialog({
   onComplete,
   onCancel,
   onHighlightField,
-  onNavigateToPage
+  onNavigateToPage,
+  useAI = true
 }: IndividualCheckboxIntentDialogProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentIntent, setCurrentIntent] = useState('');
@@ -239,7 +241,7 @@ export default function IndividualCheckboxIntentDialog({
             color: '#374151',
             marginBottom: '6px'
           }}>
-            What does this checkbox mean?
+            {useAI ? 'What does this checkbox mean?' : 'Enter display name for this checkbox:'}
           </label>
           <input
             type="text"
@@ -250,7 +252,7 @@ export default function IndividualCheckboxIntentDialog({
                 handleNext();
               }
             }}
-            placeholder="E.g., 'Has parking' or 'Monthly renewal'"
+            placeholder={useAI ? "E.g., 'Has parking' or 'Monthly renewal'" : "Enter a display name"}
             style={{
               width: '100%',
               padding: '8px',

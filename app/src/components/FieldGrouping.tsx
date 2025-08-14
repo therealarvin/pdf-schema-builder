@@ -7,11 +7,13 @@ interface FieldGroupingProps {
   selectedFields: PDFField[];
   onCreateGroup: (group: FieldGroup) => void;
   onCancel: () => void;
+  useAI?: boolean;
 }
 
-export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel }: FieldGroupingProps) {
+export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel, useAI = true }: FieldGroupingProps) {
   const [groupType, setGroupType] = useState<FieldGroup["groupType"] | "">("");
   const [intent, setIntent] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
   // Determine available group types based on selected fields
   const getAvailableGroupTypes = () => {
@@ -40,15 +42,26 @@ export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel 
   const availableTypes = getAvailableGroupTypes();
 
   const handleCreate = () => {
-    if (!groupType || !intent) {
-      alert("Please select a group type and describe the field's purpose");
+    if (!groupType) {
+      alert("Please select a group type");
+      return;
+    }
+    
+    if (useAI && !intent) {
+      alert("Please describe the field's purpose for AI generation");
+      return;
+    }
+    
+    if (!useAI && !displayName) {
+      alert("Please enter a display name");
       return;
     }
 
     onCreateGroup({
       fields: selectedFields,
       groupType: groupType as FieldGroup["groupType"],
-      intent
+      intent: useAI ? intent : displayName,
+      displayName: useAI ? undefined : displayName
     });
   };
 
@@ -118,27 +131,50 @@ export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel 
             </select>
           </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>
-              Field Intent:
-            </label>
-            <textarea
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              placeholder="Describe what this field is for (e.g., 'needs to enter the contractor for the lawn here')"
-              style={{ 
-                width: "100%", 
-                padding: "8px",
-                border: "1px solid #d1d5db",
-                borderRadius: "4px",
-                minHeight: "60px",
-                resize: "vertical"
-              }}
-            />
-            <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
-              AI will generate appropriate display name and settings based on your description
+          {useAI ? (
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>
+                Field Intent:
+              </label>
+              <textarea
+                value={intent}
+                onChange={(e) => setIntent(e.target.value)}
+                placeholder="Describe what this field is for (e.g., 'needs to enter the contractor for the lawn here')"
+                style={{ 
+                  width: "100%", 
+                  padding: "8px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "4px",
+                  minHeight: "60px",
+                  resize: "vertical"
+                }}
+              />
+              <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                AI will generate appropriate display name and settings based on your description
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>
+                Display Name:
+              </label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter a display name for this field group"
+                style={{ 
+                  width: "100%", 
+                  padding: "8px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "4px"
+                }}
+              />
+              <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                Manual mode - enter the display name directly
+              </div>
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
             <button 
