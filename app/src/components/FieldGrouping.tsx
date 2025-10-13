@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PDFField, FieldGroup } from "@/types/schema";
 
 interface FieldGroupingProps {
@@ -18,12 +18,12 @@ export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel,
   // Determine available group types based on selected fields
   const getAvailableGroupTypes = () => {
     if (selectedFields.length === 0) return [];
-    
+
     const fieldTypes = new Set(selectedFields.map(f => f.type));
-    
+
     if (fieldTypes.size === 1) {
       const type = selectedFields[0].type;
-      
+
       if (type === "text") {
         return [
           { value: "text-continuation", label: "Text Continuation (single value across multiple fields)" },
@@ -35,11 +35,35 @@ export default function FieldGrouping({ selectedFields, onCreateGroup, onCancel,
         return [{ value: "radio", label: "Radio Button Group" }];
       }
     }
-    
+
     return [];
   };
 
   const availableTypes = getAvailableGroupTypes();
+
+  // Set smart defaults based on field count and type
+  useEffect(() => {
+    if (selectedFields.length === 0) return;
+
+    const fieldTypes = new Set(selectedFields.map(f => f.type));
+
+    if (fieldTypes.size === 1) {
+      const type = selectedFields[0].type;
+
+      if (type === "text") {
+        // Single field → default to "text-same-value"
+        // Multiple fields → default to "text-continuation"
+        const defaultType = selectedFields.length === 1 ? "text-same-value" : "text-continuation";
+        setGroupType(defaultType);
+      } else if (type === "checkbox") {
+        // Only one option for checkboxes
+        setGroupType("checkbox");
+      } else if (type === "radio") {
+        // Only one option for radio buttons
+        setGroupType("radio");
+      }
+    }
+  }, [selectedFields]);
 
   const handleCreate = () => {
     if (!groupType) {

@@ -16,6 +16,7 @@ import NotificationModal from "@/components/NotificationModal";
 import LinkConfirmPopover from "@/components/LinkConfirmPopover";
 import CoordinatesViewer from "@/components/CoordinatesViewer";
 import BlockOrganizer from "@/components/BlockOrganizer";
+import SchemaDefaultsDialog from "@/components/SchemaDefaultsDialog";
 
 const MAX_BYTES = 20_971_520; // 20 MB
 function humanSize(bytes: number): string {
@@ -55,6 +56,7 @@ export default function ProjectPage() {
   const [editingSchemaItemId, setEditingSchemaItemId] = useState<string | null>(null);
   const [visibilitySelectionMode, setVisibilitySelectionMode] = useState<{ schemaItemId: string; conditionIndex: number } | null>(null);
   const [useAI, setUseAI] = useState(true); // Add AI toggle state
+  const [showDefaultsDialog, setShowDefaultsDialog] = useState(false); // Schema defaults dialog state
   
   // Modal state
   const [notification, setNotification] = useState<{
@@ -618,6 +620,21 @@ export default function ProjectPage() {
           Project: {project?.name || projectId} ({formType})
         </h1>
         <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => setShowDefaultsDialog(true)}
+            style={{
+              padding: "8px 16px",
+              background: "white",
+              border: "1px solid #8b5cf6",
+              borderRadius: "6px",
+              cursor: "pointer",
+              color: "#8b5cf6",
+              fontWeight: "500"
+            }}
+            title="Configure default values for new schema items"
+          >
+            ⚙️ Defaults
+          </button>
           {selectedFields.size > 0 && (
             <button
               onClick={handleCreateGroup}
@@ -810,7 +827,7 @@ export default function ProjectPage() {
                 onSchemaChange={setSchema}
                 fieldGroup={currentFieldGroup}
                 formType={formType}
-                onStartLinking={(linkingPath: string, linkingType: 'checkbox' | 'date' | 'text') => 
+                onStartLinking={(linkingPath: string, linkingType: 'checkbox' | 'date' | 'text') =>
                   setLinkingMode({ linkingPath, linkingType })}
                 linkingMode={linkingMode}
                 onHighlightField={setHighlightedField}
@@ -825,6 +842,7 @@ export default function ProjectPage() {
                 }}
                 useAI={useAI}
                 onUseAIChange={setUseAI}
+                projectId={projectId}
               />
             ) : activeTab === "typescript" ? (
               <SchemaExport schema={schema} formType={formType} onSchemaChange={setSchema} />
@@ -869,6 +887,13 @@ export default function ProjectPage() {
         targetName={linkConfirm.linkedSchemaItem?.display_attributes.display_name || linkConfirm.linkedSchemaItem?.unique_id || linkConfirm.field?.name || ''}
         onConfirm={handleLinkConfirm}
         onCancel={() => setLinkConfirm({ ...linkConfirm, isOpen: false, linkedSchemaItem: undefined, checkboxOptionName: undefined })}
+      />
+
+      {/* Schema Defaults Dialog */}
+      <SchemaDefaultsDialog
+        projectId={projectId}
+        isOpen={showDefaultsDialog}
+        onClose={() => setShowDefaultsDialog(false)}
       />
     </div>
   );

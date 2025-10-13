@@ -7,6 +7,7 @@ import BeautificationModal from "./BeautificationModal";
 import IndividualCheckboxIntentDialog from "./IndividualCheckboxIntentDialog";
 import NotificationModal from "./NotificationModal";
 import { generateFieldAttributes, organizeSchema, beautifySchemaBlock, BeautificationIteration, generateSingleCheckboxLabel } from "@/lib/aiService";
+import { useSchemaDefaultsStore, applySchemaDefaults } from "@/stores/schemaDefaults";
 import {
   DndContext,
   closestCenter,
@@ -46,6 +47,7 @@ interface SchemaEditorProps {
   onVisibilityFieldSelected?: (schemaItemId: string, conditionIndex: number) => void;
   useAI?: boolean;
   onUseAIChange?: (useAI: boolean) => void;
+  projectId?: string; // Add projectId for defaults
 }
 
 // Sortable item component
@@ -211,14 +213,14 @@ function SortableSchemaItem({
   );
 }
 
-export default function SchemaEditor({ 
-  schema, 
-  onSchemaChange, 
-  fieldGroup, 
-  formType, 
-  onStartLinking, 
-  linkingMode, 
-  onHighlightField, 
+export default function SchemaEditor({
+  schema,
+  onSchemaChange,
+  fieldGroup,
+  formType,
+  onStartLinking,
+  linkingMode,
+  onHighlightField,
   onNavigateToPage,
   onEditingItemChange,
   editingItemId,
@@ -227,8 +229,10 @@ export default function SchemaEditor({
   visibilityFieldSelectionMode: parentVisibilityMode,
   onVisibilityFieldSelected,
   useAI: parentUseAI,
-  onUseAIChange
+  onUseAIChange,
+  projectId
 }: SchemaEditorProps) {
+  const { getDefaults } = useSchemaDefaultsStore();
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [newItem, setNewItem] = useState<Partial<SchemaItem> | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -417,7 +421,7 @@ export default function SchemaEditor({
     if (group.intent && useAI) {
       try {
         setIsGeneratingAI(true);
-        
+
         const aiAttributes = await generateFieldAttributes({
           intent: group.intent,
           fieldType: 'checkbox',
@@ -425,7 +429,7 @@ export default function SchemaEditor({
           pdfContext: group.fields,
           groupType: 'checkbox'
         });
-        
+
         // Apply AI attributes but keep our custom checkbox labels
         baseItem.display_attributes.display_name = aiAttributes.display_name;
         if (aiAttributes.description) {
@@ -442,6 +446,12 @@ export default function SchemaEditor({
       } finally {
         setIsGeneratingAI(false);
       }
+    }
+
+    // Apply defaults if enabled and projectId is provided
+    if (projectId) {
+      const defaults = getDefaults(projectId);
+      return applySchemaDefaults(baseItem, defaults);
     }
 
     return baseItem;
@@ -620,6 +630,12 @@ export default function SchemaEditor({
       } finally {
         setIsGeneratingAI(false);
       }
+    }
+
+    // Apply defaults if enabled and projectId is provided
+    if (projectId) {
+      const defaults = getDefaults(projectId);
+      return applySchemaDefaults(baseItem, defaults);
     }
 
     return baseItem;
