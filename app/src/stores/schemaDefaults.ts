@@ -5,6 +5,7 @@ import { SchemaItem } from "@/types/schema";
 
 export type SchemaDefaults = {
   enabled: boolean;
+  autoCreate: boolean; // If true, skip preview and create schema item immediately
   block?: string;
   block_style?: {
     title?: string;
@@ -29,6 +30,7 @@ type SchemaDefaultsState = {
 
 const defaultDefaults: SchemaDefaults = {
   enabled: false,
+  autoCreate: false,
   block: undefined,
   block_style: undefined,
   isRequired: false,

@@ -87,7 +87,7 @@ export default function SchemaDefaultsDialog({ projectId, isOpen, onClose }: Sch
         </div>
 
         {/* Enable/Disable Toggle */}
-        <div style={{ marginBottom: "24px" }}>
+        <div style={{ marginBottom: "16px" }}>
           <label
             style={{
               display: "flex",
@@ -109,6 +109,35 @@ export default function SchemaDefaultsDialog({ projectId, isOpen, onClose }: Sch
             <div>
               <div style={{ fontWeight: "600", fontSize: "16px" }}>Enable Defaults</div>
               <div style={{ fontSize: "13px", color: "#6b7280" }}>Apply these defaults to new schema items</div>
+            </div>
+          </label>
+        </div>
+
+        {/* Auto-Create Toggle */}
+        <div style={{ marginBottom: "24px" }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px",
+              border: "2px solid #e5e7eb",
+              borderRadius: "8px",
+              cursor: "pointer",
+              background: localDefaults.autoCreate ? "#f0fdf4" : "white",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={localDefaults.autoCreate}
+              onChange={(e) => setLocalDefaults({ ...localDefaults, autoCreate: e.target.checked })}
+              style={{ cursor: "pointer", width: "18px", height: "18px" }}
+            />
+            <div>
+              <div style={{ fontWeight: "600", fontSize: "16px" }}>Auto-Create Schema Items</div>
+              <div style={{ fontSize: "13px", color: "#6b7280" }}>
+                Skip preview step and create schema items immediately after grouping fields
+              </div>
             </div>
           </label>
         </div>

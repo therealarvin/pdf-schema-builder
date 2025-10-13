@@ -498,8 +498,25 @@ export default function SchemaEditor({
       
       // Create schema item with AI-generated labels
       const schemaItem = await generateSchemaItemWithLabels(group, labels);
-      setNewItem(schemaItem);
-      setEditingItem(schemaItem.unique_id);
+
+      // Check if auto-create is enabled
+      const defaults = projectId ? getDefaults(projectId) : { enabled: false, autoCreate: false };
+      const shouldAutoCreate = defaults.autoCreate;
+
+      if (shouldAutoCreate) {
+        // Auto-create: directly add to schema without preview
+        onSchemaChange([...schema, schemaItem]);
+        setNotification({
+          isOpen: true,
+          message: `Created checkbox schema item: ${schemaItem.display_attributes.display_name || schemaItem.unique_id}`,
+          type: 'success',
+          title: 'Schema Item Created'
+        });
+      } else {
+        // Normal flow: show preview in editor
+        setNewItem(schemaItem);
+        setEditingItem(schemaItem.unique_id);
+      }
     } catch (error) {
       console.error('Error generating checkbox labels:', error);
       setNotification({
@@ -648,12 +665,16 @@ export default function SchemaEditor({
       // Check if this field group's items are already in the schema
       const firstFieldName = fieldGroup.fields[0]?.name;
       const alreadyInSchema = schema.some(item => item.unique_id === firstFieldName);
-      
+
       // Also check if we already have a newItem with this field
       const alreadyProcessing = newItem && newItem.unique_id === firstFieldName;
-      
+
       // Only generate if not already in schema and not currently processing
       if (!alreadyInSchema && !alreadyProcessing) {
+        // Check if auto-create is enabled
+        const defaults = projectId ? getDefaults(projectId) : { enabled: false, autoCreate: false };
+        const shouldAutoCreate = defaults.autoCreate;
+
         // For checkbox groups, show the intent dialog
         if (fieldGroup.groupType === 'checkbox') {
           setPendingCheckboxGroup(fieldGroup);
@@ -662,8 +683,21 @@ export default function SchemaEditor({
           // For other types, generate normally
           (async () => {
             const newSchemaItem = await generateSchemaItem(fieldGroup);
-            setNewItem(newSchemaItem);
-            setEditingItem(newSchemaItem.unique_id);
+
+            if (shouldAutoCreate) {
+              // Auto-create: directly add to schema without preview
+              onSchemaChange([...schema, newSchemaItem]);
+              setNotification({
+                isOpen: true,
+                message: `Created schema item: ${newSchemaItem.display_attributes.display_name || newSchemaItem.unique_id}`,
+                type: 'success',
+                title: 'Schema Item Created'
+              });
+            } else {
+              // Normal flow: show preview in editor
+              setNewItem(newSchemaItem);
+              setEditingItem(newSchemaItem.unique_id);
+            }
           })();
         }
       }
